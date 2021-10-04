@@ -7,7 +7,7 @@
     "node": ">=10.0.0"
   },
   "scripts": {
-    "demo": "node index.js",
+    "demo": "node src/index.js",
     "test": "jest"
   },
   "author": "",
