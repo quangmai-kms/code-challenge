@@ -7,12 +7,12 @@ class TrieNode {
 }
 
 const TOP_NUMBER = 100;
-
 class RequestHandler {
-  constructor() {
+  constructor(topNumber) {
     this.root = new TrieNode();
     this.topCounts = [];
     this.topIpAddresses = [];
+    this.topNumber = topNumber || TOP_NUMBER;
   }
 
   request_handled(ipAddress) {
@@ -29,12 +29,21 @@ class RequestHandler {
 
     currentNode.ipAddress = ipAddress;
     currentNode.count = currentNode.count + 1;
-    // build top100
-    this._buildTopCounts(currentNode);
+
+    try {
+      buildTopCounts(
+        this.topCounts,
+        this.topIpAddresses,
+        currentNode,
+        this.topNumber
+      );
+    } catch (error) {
+      console.log('request_handled', error);
+    }
   }
 
   top100() {
-    if (!this.topIpAddresses || this.topIpAddresses.length === 0 ) {
+    if (!this.topIpAddresses || this.topIpAddresses.length === 0) {
       this.topIpAddresses = convertToIpAddresses(this.topCounts);
     }
 
@@ -46,58 +55,38 @@ class RequestHandler {
     this.root = new TrieNode();
     this.top100 = [];
   }
+}
 
-  // Edge case: same count but 100 addresses only ?!
-  _buildTopCounts(node) {
-    console.log('build topCounts for', node);
+function buildTopCounts(topCounts, topIpAddresses, node, topNumber) {
+  if (!topCounts || !topIpAddresses || !node || !topNumber) {
+    throw 'Empty input values.';
+  }
 
-    if (this.topCounts.length === 0) {
-      this.topCounts.push(node);
-      return;
+  if (topCounts.length === 0) {
+    topCounts.push(node);
+    return;
+  }
+
+  const existIndex = topCounts.indexOf(node);
+  if (existIndex > -1) {
+    const previousIndex = existIndex - 1;
+    if (previousIndex >= 0 && topCounts[previousIndex].count < node.count) {
+      const moved = moveUpCount(topCounts, existIndex);
+      if (moved) {
+        topIpAddresses = [];
+      }
     }
-
-    const existIndex = this.topCounts.indexOf(node);
-    if (existIndex > -1) {
-      console.log('-- topCount indexOf found')
-      // sortTopCounts(this.topCounts);
-      const previousIndex = existIndex - 1;
-      if (previousIndex >= 0 && this.topCounts[previousIndex].count < node.count) {
-        // swapNodes(this.topCounts, existIndex, previousIndex);
-        const moved = moveUpCount(this.topCounts, existIndex);
-        if (moved) {
-          this.topIpAddresses = [];
-        }
+  } else if (topCounts.length < topNumber - 1) {
+    topCounts.push(node);
+    topIpAddresses = [];
+  } else {
+    const last = topCounts[topCounts.length - 1];
+    if (last.count < node.count) {
+      topCounts[topCounts.length - 1] = node;
+      const moved = moveUpCount(topCounts, topCounts.length - 1);
+      if (moved) {
+        topIpAddresses = [];
       }
-    } else if (this.topCounts.length < TOP_NUMBER - 1) {
-      console.log('-- topCount length availble', this.topCounts.length)
-      this.topCounts.push(node);
-      this.topIpAddresses = [];
-      // sortTopCounts(this.topCounts);
-    } else {
-      const last = this.topCounts[this.topCounts.length - 1];
-      if (last.count < node.count) {
-        console.log('--- topCount indexOf not found so add new count', last);
-        this.topCounts[this.topCounts.length - 1] = node;
-        // this.topCounts.push(node);
-        const moved = moveUpCount(this.topCounts, this.topCounts.length - 1);
-        if (moved) {
-          this.topIpAddresses = [];
-        }
-        // this.topCounts = this.topCounts.slice(0, 10);
-      }
-
-      // console.log('-- topCount indexOf not found', this.topCounts, this.topCounts.length)
-      // const last = this.topCounts[this.topCounts.length - 1];
-      // console.log('-- topCount indexOf not found last', last);
-      // if (last.count === node.count && this.topCounts.length < 10 - 1) {
-      //   console.log('--- topCount indexOf not found found same count', last);
-      //   this.topCounts.push(node);
-      // } else if (last.count < node.count) {
-      //   console.log('--- topCount indexOf not found so add new count', last);
-      //   this.topCounts.push(node);
-      //   // sortTopCounts(this.topCounts);
-      //   // this.topCounts = this.topCounts.slice(0, 10);
-      // }
     }
   }
 }
@@ -106,34 +95,26 @@ function convertToIpAddresses(nodes) {
   let ipAddresses = [];
 
   if (nodes) {
-    ipAddresses = nodes.map(node => {
+    ipAddresses = nodes.map((node) => {
       return node.ipAddress;
-    })
+    });
   }
 
   return ipAddresses;
 }
 
 function moveUpCount(arr, needToUpIndex) {
-  // for (i = arr.length - 1; i > 0 && arr[i].count >= arr[i - 1].count; i--) {
-  //   var tmp = arr[i];
-  //   arr[i] = arr[i - 1];
-  //   arr[i - 1] = tmp;
-  // }
-  // return arr;
-
-  // let needToUpIndex = fromIndex;
   let moved = false;
-  console.log('..... begin', needToUpIndex);
   let previousIndex = needToUpIndex - 1;
-  console.log('..... begin', needToUpIndex, previousIndex);
-  // const previousNode = arr[lastIndex - 1]
-  while (previousIndex >= 0 && arr[needToUpIndex].count > arr[previousIndex].count) {
+
+  while (
+    previousIndex >= 0 &&
+    arr[needToUpIndex].count > arr[previousIndex].count
+  ) {
     swapNodes(arr, needToUpIndex, previousIndex);
     needToUpIndex = previousIndex;
     previousIndex = previousIndex - 1;
     moved = true;
-    console.log('.....', needToUpIndex, previousIndex);
   }
 
   return moved;
@@ -144,38 +125,6 @@ function swapNodes(arr, i, j) {
   arr[i] = arr[j];
   arr[j] = tmp;
 }
-
-// function addAndSort(arr, val) {
-//   arr.push(val);
-//   for (i = arr.length - 1; i > 0 && arr[i] < arr[i - 1]; i--) {
-//     var tmp = arr[i];
-//     arr[i] = arr[i - 1];
-//     arr[i - 1] = tmp;
-//   }
-//   return arr;
-// }
-
-// function containsCount(arr, count, start, end) {
-//   if (start > end) return false;
-//   const mid = Math.floor((start + end) / 2);
-
-//   if (arr[mid].count === count) return true;
-//   if (arr[mid].count > count) {
-//     return containsCount(arr, count, mid + 1, end);
-//   }
-//   return containsCount(arr, count, start, mid - 1);
-// }
-
-// var test = [ { count: 11 }, { count: 7 },  { count: 3 }, { count: 3 }, { count: 1 } ]
-
-// function sortCount(arr) {
-//   for (i = arr.length - 1; i > 0 && arr[i].count < arr[i - 1].count; i--) {
-//     var tmp = arr[i];
-//     arr[i] = arr[i - 1];
-//     arr[i - 1] = tmp;
-//   }
-//   return arr;
-// }
 
 const requestIps = [
   '245.87.2.109',
@@ -428,7 +377,7 @@ const requestIps = [
 
   '185.225.100.249',
   '185.220.101.249',
-]
+];
 
 let t = new RequestHandler();
 
