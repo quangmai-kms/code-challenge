@@ -31,16 +31,12 @@ class RequestHistory {
     currentNode.ipAddress = ipAddress;
     currentNode.count = currentNode.count + 1;
 
-    try {
-      buildTopCounts(
-        this.topCounts,
-        this.topIpAddresses,
-        currentNode,
-        this.topNumber
-      );
-    } catch (error) {
-      console.log('request_handled', error);
-    }
+    buildTopCounts(
+      this.topCounts,
+      this.topIpAddresses,
+      currentNode,
+      this.topNumber
+    );
   }
 
   top100() {
@@ -54,15 +50,12 @@ class RequestHistory {
   clear() {
     delete this.root.children;
     this.root = new TrieNode();
-    this.top100 = [];
+    this.topCounts = [];
+    this.topIpAddresses = [];
   }
 }
 
 function buildTopCounts(topCounts, topIpAddresses, node, topNumber) {
-  if (!topCounts || !topIpAddresses || !node || !topNumber) {
-    throw 'Empty input values.';
-  }
-
   if (topCounts.length === 0) {
     topCounts.push(node);
     return;
@@ -77,7 +70,7 @@ function buildTopCounts(topCounts, topIpAddresses, node, topNumber) {
         topIpAddresses = [];
       }
     }
-  } else if (topCounts.length < topNumber - 1) {
+  } else if (topCounts.length <= topNumber - 1) {
     topCounts.push(node);
     topIpAddresses = [];
   } else {
