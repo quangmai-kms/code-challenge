@@ -31,19 +31,18 @@ class RequestHistory {
     currentNode.ipAddress = ipAddress;
     currentNode.count = currentNode.count + 1;
 
-    buildTopCounts(
+    const built = buildTopCounts(
       this.topCounts,
-      this.topIpAddresses,
       currentNode,
       this.topNumber
     );
+
+    if (built) {
+      this.topIpAddresses = convertToIpAddresses(this.topCounts);
+    }
   }
 
   top100() {
-    if (!this.topIpAddresses || this.topIpAddresses.length === 0) {
-      this.topIpAddresses = convertToIpAddresses(this.topCounts);
-    }
-
     return this.topIpAddresses;
   }
 
@@ -55,34 +54,31 @@ class RequestHistory {
   }
 }
 
-function buildTopCounts(topCounts, topIpAddresses, node, topNumber) {
+function buildTopCounts(topCounts, node, topNumber) {
+  let built = false;
   if (topCounts.length === 0) {
     topCounts.push(node);
-    return;
+    return true;
   }
 
-  const existIndex = topCounts.indexOf(node);
-  if (existIndex > -1) {
-    const previousIndex = existIndex - 1;
+  const currentIndex = topCounts.indexOf(node);
+  if (currentIndex > -1) {
+    const previousIndex = currentIndex - 1;
     if (previousIndex >= 0 && topCounts[previousIndex].count < node.count) {
-      const moved = moveUpCount(topCounts, existIndex);
-      if (moved) {
-        topIpAddresses = [];
-      }
+      built = moveUpCount(topCounts, currentIndex);
     }
   } else if (topCounts.length <= topNumber - 1) {
     topCounts.push(node);
-    topIpAddresses = [];
+    built = true;
   } else {
-    const last = topCounts[topCounts.length - 1];
-    if (last.count < node.count) {
+    const lastNode = topCounts[topCounts.length - 1];
+    if (lastNode.count < node.count) {
       topCounts[topCounts.length - 1] = node;
-      const moved = moveUpCount(topCounts, topCounts.length - 1);
-      if (moved) {
-        topIpAddresses = [];
-      }
+      built = moveUpCount(topCounts, topCounts.length - 1);
     }
   }
+
+  return built;
 }
 
 function convertToIpAddresses(nodes) {
