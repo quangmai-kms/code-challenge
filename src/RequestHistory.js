@@ -16,6 +16,10 @@ class RequestHistory {
     this.topNumber = topNumber || TOP_NUMBER;
   }
 
+  /**
+   * The IP address will be add to a Trie Tree.
+   * Then we will build the top 100 with that node, and update the top IP addresses if necessary.
+   */
   request_handled(ipAddress) {
     if (ipAddress.length === 0) return;
 
@@ -26,6 +30,9 @@ class RequestHistory {
     }
   }
 
+  /**
+   * Return the top 100 of the highest traffic IP addresses.
+   */
   top100() {
     return this.topIpAddresses;
   }
@@ -37,6 +44,9 @@ class RequestHistory {
     this.topIpAddresses = [];
   }
 
+  /**
+   * The IP address will be add to traversed a Trie Tree, then update its node or store it in the new node.
+   */
   _insertOrUpdateNode(ipAddress) {
     let character;
     let currentNode = this.root;
@@ -54,12 +64,11 @@ class RequestHistory {
   }
 }
 
+/**
+ * Update the top IP address counts when a Trie Tree node is updated or created.
+ */
 function buildTopCounts(topCounts, node, topNumber) {
   let built = false;
-  if (topCounts.length === 0) {
-    topCounts.push(node);
-    return true;
-  }
 
   const currentIndex = topCounts.indexOf(node);
   if (currentIndex > -1) {
@@ -67,7 +76,7 @@ function buildTopCounts(topCounts, node, topNumber) {
     if (previousIndex >= 0 && topCounts[previousIndex].count < node.count) {
       built = moveUpCount(topCounts, currentIndex);
     }
-  } else if (topCounts.length <= topNumber - 1) {
+  } else if (topCounts.length === 0 || topCounts.length <= topNumber - 1) {
     topCounts.push(node);
     built = true;
   } else {
@@ -85,14 +94,16 @@ function convertToIpAddresses(nodes) {
   let ipAddresses = [];
 
   if (nodes) {
-    ipAddresses = nodes.map((node) => {
-      return node.ipAddress;
-    });
+    ipAddresses = nodes.map((node) => node.ipAddress);
   }
 
   return ipAddresses;
 }
 
+/**
+ * We always have only one direction data change, the way up only because count always increases `1`.
+ * So we just level up the count by one level.
+ */
 function moveUpCount(arr, needToUpIndex) {
   let moved = false;
   let previousIndex = needToUpIndex - 1;
