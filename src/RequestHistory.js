@@ -23,7 +23,7 @@ class RequestHistory {
   request_handled(ipAddress) {
     if (ipAddress.length === 0) return;
 
-    const currentNode = this._insertOrUpdateNode(ipAddress);
+    const currentNode = this.insertOrUpdateNode(ipAddress);
     const built = buildTopCounts(this.topCounts, currentNode, this.topNumber);
     if (built) {
       this.topIpAddresses = convertToIpAddresses(this.topCounts);
@@ -47,7 +47,7 @@ class RequestHistory {
   /**
    * The IP address will be add to traversed a Trie Tree, then update its node or store it in the new node.
    */
-  _insertOrUpdateNode(ipAddress) {
+  insertOrUpdateNode(ipAddress) {
     let character;
     let currentNode = this.root;
     for (let i = 0; i < ipAddress.length; i++) {
