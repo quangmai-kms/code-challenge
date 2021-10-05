@@ -18,25 +18,9 @@ class RequestHistory {
 
   request_handled(ipAddress) {
     if (ipAddress.length === 0) return;
-    let character;
-    let currentNode = this.root;
-    for (let i = 0; i < ipAddress.length; i++) {
-      character = ipAddress[i];
-      if (!currentNode.children[character]) {
-        currentNode.children[character] = new TrieNode();
-      }
-      currentNode = currentNode.children[character];
-    }
 
-    currentNode.ipAddress = ipAddress;
-    currentNode.count = currentNode.count + 1;
-
-    const built = buildTopCounts(
-      this.topCounts,
-      currentNode,
-      this.topNumber
-    );
-
+    const currentNode = this._insertOrUpdateNode(ipAddress);
+    const built = buildTopCounts(this.topCounts, currentNode, this.topNumber);
     if (built) {
       this.topIpAddresses = convertToIpAddresses(this.topCounts);
     }
@@ -51,6 +35,22 @@ class RequestHistory {
     this.root = new TrieNode();
     this.topCounts = [];
     this.topIpAddresses = [];
+  }
+
+  _insertOrUpdateNode(ipAddress) {
+    let character;
+    let currentNode = this.root;
+    for (let i = 0; i < ipAddress.length; i++) {
+      character = ipAddress[i];
+      if (!currentNode.children[character]) {
+        currentNode.children[character] = new TrieNode();
+      }
+      currentNode = currentNode.children[character];
+    }
+
+    currentNode.ipAddress = ipAddress;
+    currentNode.count = currentNode.count + 1;
+    return currentNode;
   }
 }
 
